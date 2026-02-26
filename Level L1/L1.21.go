@@ -2,25 +2,37 @@ package main
 
 import "fmt"
 
-type NewMethod interface {
-	New()
+// Logger Новый интерфейс, который ожидает фреймворк
+type Logger interface {
+	Log(message string)
 }
 
-type OldMethod struct{}
+// LegacyPrinter старый тип, который нельзя менять из допустим старой библиотеки
+type LegacyPrinter struct{}
 
-func (o *OldMethod) Old() {
-	fmt.Println("Я тут")
+func (p *LegacyPrinter) Print(msg string) {
+	fmt.Println("[Legacy]:", msg)
 }
 
-type Adapter struct {
-	OldMethod *OldMethod
+// PrinterAdapter делаем возможность совместить с новым интерфейсом
+type PrinterAdapter struct {
+	legacy *LegacyPrinter
 }
 
-func (a *Adapter) New() {
-	a.OldMethod.Old()
+func (a *PrinterAdapter) Log(message string) {
+	a.legacy.Print(message)
+}
+
+// Process код, который работает только с Logger
+func Process(logger Logger) {
+	logger.Log("Обработка данных...")
+	logger.Log("Готово!")
 }
 
 func main() {
-	var n NewMethod = &Adapter{OldMethod: &OldMethod{}}
-	n.New()
+	old := &LegacyPrinter{}
+	adapter := &PrinterAdapter{legacy: old}
+
+	// старый логгер можно использовать там, где требуется новый интерфейс
+	Process(adapter)
 }
